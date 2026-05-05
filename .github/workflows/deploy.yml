@@ -46,15 +46,15 @@ jobs:
 
       - name: Verify deploy path
         run: |
-          if [ -z "${{ vars.DEPLOY_PATH }}" ]; then
+          if [ -z "${{ secrets.DEPLOY_PATH }}" ]; then
             echo "ERROR: DEPLOY_PATH secret is empty"
             exit 1
           fi
-          case "${{ vars.DEPLOY_PATH }}" in
+          case "${{ secrets.DEPLOY_PATH }}" in
             /home/*/domains/*/public_html) ;;
             *)
               echo "ERROR: DEPLOY_PATH must match /home/USER/domains/DOMAIN/public_html"
-              echo "Got: ${{ vars.DEPLOY_PATH }}"
+              echo "Got: ${{ secrets.DEPLOY_PATH }}"
               exit 1
               ;;
           esac
@@ -62,4 +62,30 @@ jobs:
 
       - name: Setup SSH
         run: |
-          mkdir -p ~/.s
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Verify destination is writable
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "test -d '${{ secrets.DEPLOY_PATH }}' && test -w '${{ secrets.DEPLOY_PATH }}' && echo OK" \
+            || (echo "ERROR: Destination does not exist or is not writable"; exit 1)
+
+      - name: Dry-run rsync
+        run: |
+          echo "=== DRY RUN - showing what would change ==="
+          rsync -avz --delete --dry-run \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" \
+            dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
+
+      - name: Deploy via rsync
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" \
+            dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/
