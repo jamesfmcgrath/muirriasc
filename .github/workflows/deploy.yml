@@ -80,7 +80,7 @@ jobs:
 
       - name: Verify destination is writable
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }} \
+          ssh -v -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "test -d '${{ secrets.DEPLOY_PATH }}' && test -w '${{ secrets.DEPLOY_PATH }}' && echo OK" \
             || (echo "ERROR: Destination does not exist or is not writable"; exit 1)
