@@ -67,17 +67,6 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Debug SSH key shape
-        run: |
-          echo "Key file size:"
-          wc -c ~/.ssh/deploy_key
-          echo "Line count:"
-          wc -l ~/.ssh/deploy_key
-          echo "First line:"
-          head -1 ~/.ssh/deploy_key
-          echo "Last line:"
-          tail -1 ~/.ssh/deploy_key
-
       - name: Verify destination is writable
         run: |
           ssh -v -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p ${{ secrets.SSH_PORT }} \
