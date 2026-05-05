@@ -46,15 +46,15 @@ jobs:
 
       - name: Verify deploy path
         run: |
-          if [ -z "${{ secrets.DEPLOY_PATH }}" ]; then
+          if [ -z "${{ vars.DEPLOY_PATH }}" ]; then
             echo "ERROR: DEPLOY_PATH secret is empty"
             exit 1
           fi
-          case "${{ secrets.DEPLOY_PATH }}" in
+          case "${{ vars.DEPLOY_PATH }}" in
             /home/*/domains/*/public_html) ;;
             *)
               echo "ERROR: DEPLOY_PATH must match /home/USER/domains/DOMAIN/public_html"
-              echo "Got: ${{ secrets.DEPLOY_PATH }}"
+              echo "Got: ${{ vars.DEPLOY_PATH }}"
               exit 1
               ;;
           esac
